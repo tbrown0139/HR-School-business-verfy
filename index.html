@@ -73,12 +73,20 @@
             margin-bottom: 15px;
             padding-bottom: 15px;
             border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
         }
 
         .results .item:last-child {
             border-bottom: none;
             margin-bottom: 0;
             padding-bottom: 0;
+        }
+
+        .results .item img {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
         }
 
         .toggle {
@@ -143,12 +151,17 @@
 
                     resultsDiv.innerHTML = uniMatches.length > 0 ? '<h2>University Matches</h2>' : '<p>No results found.</p>';
                     uniMatches.forEach(uni => {
+                        const domain = uni.domains[0] || '';
+                        const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}`;
                         resultsDiv.innerHTML += `
                             <div class="item">
-                                <h3>${uni.name}</h3>
-                                <p><strong>Country:</strong> ${uni.country}</p>
-                                <p><strong>Domains:</strong> ${uni.domains.join(', ')}</p>
-                                <p><strong>Web Pages:</strong> ${uni.web_pages.join(', ')}</p>
+                                <img src="${faviconUrl}" alt="Favicon">
+                                <div>
+                                    <h3>${uni.name}</h3>
+                                    <p><strong>Country:</strong> ${uni.country}</p>
+                                    <p><strong>Domains:</strong> ${uni.domains.join(', ')}</p>
+                                    <p><strong>Web Pages:</strong> ${uni.web_pages.join(', ')}</p>
+                                </div>
                             </div>`;
                     });
                 } else if (currentMode === 'business') {
@@ -158,12 +171,17 @@
 
                     resultsDiv.innerHTML = corpMatches.length > 0 ? '<h2>Business Matches</h2>' : '<p>No results found.</p>';
                     corpMatches.forEach(corp => {
+                        const domain = corp.company.homepage_url || '';
+                        const faviconUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}` : '';
                         resultsDiv.innerHTML += `
                             <div class="item">
-                                <h3>${corp.company.name}</h3>
-                                <p><strong>Jurisdiction:</strong> ${corp.company.jurisdiction_code}</p>
-                                <p><strong>Company Number:</strong> ${corp.company.company_number}</p>
-                                <p><strong>Current Status:</strong> ${corp.company.current_status}</p>
+                                ${faviconUrl ? `<img src="${faviconUrl}" alt="Favicon">` : ''}
+                                <div>
+                                    <h3>${corp.company.name}</h3>
+                                    <p><strong>Jurisdiction:</strong> ${corp.company.jurisdiction_code}</p>
+                                    <p><strong>Company Number:</strong> ${corp.company.company_number}</p>
+                                    <p><strong>Current Status:</strong> ${corp.company.current_status}</p>
+                                </div>
                             </div>`;
                     });
                 }
