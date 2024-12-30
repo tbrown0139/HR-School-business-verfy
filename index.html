@@ -80,41 +80,68 @@
             margin-bottom: 0;
             padding-bottom: 0;
         }
+
+        .toggle {
+            margin-bottom: 20px;
+        }
+
+        .toggle button {
+            margin: 0 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .toggle .active {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .toggle button:hover {
+            background-color: #0056b3;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Knovon HR Verification Tool</h1>
+        <div class="toggle">
+            <button id="schoolToggle" class="active" onclick="setMode('school')">School</button>
+            <button id="businessToggle" onclick="setMode('business')">Business</button>
+        </div>
         <div class="search-bar">
-            <input type="text" id="searchQuery" placeholder="Enter business name, domain, or other information...">
+            <input type="text" id="searchQuery" placeholder="Enter information to search...">
             <button onclick="searchInfo()"><i class="fas fa-search"></i> Search</button>
         </div>
         <div id="results" class="results"></div>
     </div>
 
     <script>
+        let currentMode = 'school';
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('schoolToggle').classList.toggle('active', mode === 'school');
+            document.getElementById('businessToggle').classList.toggle('active', mode === 'business');
+            document.getElementById('results').innerHTML = '';
+        }
+
         async function searchInfo() {
             const query = document.getElementById('searchQuery').value.trim();
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '<p>Loading...</p>';
 
             try {
-                // Fetching universities
-                const uniResponse = await fetch(`https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json`);
-                const universities = await uniResponse.json();
-                const uniMatches = universities.filter(uni => {
-                    return Object.values(uni).some(val => val && val.toString().toLowerCase().includes(query.toLowerCase()));
-                });
+                if (currentMode === 'school') {
+                    const uniResponse = await fetch(`https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json`);
+                    const universities = await uniResponse.json();
+                    const uniMatches = universities.filter(uni => {
+                        return Object.values(uni).some(val => val && val.toString().toLowerCase().includes(query.toLowerCase()));
+                    });
 
-                // Fetching businesses
-                const corpResponse = await fetch(`https://api.opencorporates.com/v0.4/companies/search?q=${encodeURIComponent(query)}&api_token=YOUR_API_TOKEN`);
-                const corpData = await corpResponse.json();
-                const corpMatches = corpData.results.companies || [];
-
-                resultsDiv.innerHTML = '';
-
-                if (uniMatches.length > 0) {
-                    resultsDiv.innerHTML += `<h2>University Matches</h2>`;
+                    resultsDiv.innerHTML = uniMatches.length > 0 ? '<h2>University Matches</h2>' : '<p>No results found.</p>';
                     uniMatches.forEach(uni => {
                         resultsDiv.innerHTML += `
                             <div class="item">
@@ -124,10 +151,12 @@
                                 <p><strong>Web Pages:</strong> ${uni.web_pages.join(', ')}</p>
                             </div>`;
                     });
-                }
+                } else if (currentMode === 'business') {
+                    const corpResponse = await fetch(`https://api.opencorporates.com/v0.4/companies/search?q=${encodeURIComponent(query)}&api_token=YOUR_API_TOKEN`);
+                    const corpData = await corpResponse.json();
+                    const corpMatches = corpData.results.companies || [];
 
-                if (corpMatches.length > 0) {
-                    resultsDiv.innerHTML += `<h2>Business Matches</h2>`;
+                    resultsDiv.innerHTML = corpMatches.length > 0 ? '<h2>Business Matches</h2>' : '<p>No results found.</p>';
                     corpMatches.forEach(corp => {
                         resultsDiv.innerHTML += `
                             <div class="item">
@@ -137,10 +166,6 @@
                                 <p><strong>Current Status:</strong> ${corp.company.current_status}</p>
                             </div>`;
                     });
-                }
-
-                if (uniMatches.length === 0 && corpMatches.length === 0) {
-                    resultsDiv.innerHTML = '<p>No results found.</p>';
                 }
             } catch (error) {
                 resultsDiv.innerHTML = `<p>Error loading data: ${error.message}</p>`;
