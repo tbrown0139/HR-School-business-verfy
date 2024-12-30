@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knovon HR Verification Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            width: 80%;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.2em;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .search-bar button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-bar button:hover {
+            background-color: #0056b3;
+        }
+
+        .results {
+            background: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+
+        .results .item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .results .item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Knovon HR Verification Tool</h1>
+        <div class="search-bar">
+            <input type="text" id="searchQuery" placeholder="Enter business name, domain, or other information...">
+            <button onclick="searchInfo()"><i class="fas fa-search"></i> Search</button>
+        </div>
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        async function searchInfo() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Loading...</p>';
+
+            try {
+                // Fetching universities
+                const uniResponse = await fetch(`https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json`);
+                const universities = await uniResponse.json();
+                const uniMatches = universities.filter(uni => {
+                    return Object.values(uni).some(val => val && val.toString().toLowerCase().includes(query.toLowerCase()));
+                });
+
+                // Fetching businesses
+                const corpResponse = await fetch(`https://api.opencorporates.com/v0.4/companies/search?q=${encodeURIComponent(query)}&api_token=YOUR_API_TOKEN`);
+                const corpData = await corpResponse.json();
+                const corpMatches = corpData.results.companies || [];
+
+                resultsDiv.innerHTML = '';
+
+                if (uniMatches.length > 0) {
+                    resultsDiv.innerHTML += `<h2>University Matches</h2>`;
+                    uniMatches.forEach(uni => {
+                        resultsDiv.innerHTML += `
+                            <div class="item">
+                                <h3>${uni.name}</h3>
+                                <p><strong>Country:</strong> ${uni.country}</p>
+                                <p><strong>Domains:</strong> ${uni.domains.join(', ')}</p>
+                                <p><strong>Web Pages:</strong> ${uni.web_pages.join(', ')}</p>
+                            </div>`;
+                    });
+                }
+
+                if (corpMatches.length > 0) {
+                    resultsDiv.innerHTML += `<h2>Business Matches</h2>`;
+                    corpMatches.forEach(corp => {
+                        resultsDiv.innerHTML += `
+                            <div class="item">
+                                <h3>${corp.company.name}</h3>
+                                <p><strong>Jurisdiction:</strong> ${corp.company.jurisdiction_code}</p>
+                                <p><strong>Company Number:</strong> ${corp.company.company_number}</p>
+                                <p><strong>Current Status:</strong> ${corp.company.current_status}</p>
+                            </div>`;
+                    });
+                }
+
+                if (uniMatches.length === 0 && corpMatches.length === 0) {
+                    resultsDiv.innerHTML = '<p>No results found.</p>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p>Error loading data: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
